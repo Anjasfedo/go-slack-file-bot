@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/slack-go/slack"
@@ -18,22 +19,33 @@ func main() {
 
 	channerArr := []string{os.Getenv("CHANNEL_ID")}
 
-	fileArr := []string{"./file/img-blank.PNG"}
+	directioryPath := "./file"
 
-	for i := 0; i < len(fileArr); i++ {
-		params := slack.FileUploadParameters{
-			Channels: channerArr,
-			File:     fileArr[i],
-		}
-
-		file, err := api.UploadFile(params)
-		if err != nil {
-			fmt.Printf("Error: %s\n", err)
-			return
-		}
-
-		fmt.Printf("Name: %s, URL: %s\n", file.Name, file.URL)
+	files, err := filepath.Glob(filepath.Join(directioryPath, "*"))
+	if err != nil {
+		log.Fatal("Error Getting Files in Directory: ", err)
 	}
+
+	for _, filePath := range files {
+		uploadFileHandler()
+	}
+
+	// fileArr := []string{"./file/img-blank.PNG"}
+
+	// for i := 0; i < len(fileArr); i++ {
+	// 	params := slack.FileUploadParameters{
+	// 		Channels: channerArr,
+	// 		File:     fileArr[i],
+	// 	}
+
+	// 	file, err := api.UploadFile(params)
+	// 	if err != nil {
+	// 		fmt.Printf("Error: %s\n", err)
+	// 		return
+	// 	}
+
+	// 	fmt.Printf("Name: %s, URL: %s\n", file.Name, file.URL)
+	// }
 }
 
 func loadEnv() error {
@@ -62,4 +74,19 @@ func loadEnv() error {
 	}
 
 	return nil
+}
+
+func uploadFileHandler(api *slack.Client, channels []string, filePath string) {
+	params := slack.FileUploadParameters{
+		Channels: channels,
+		File:     filePath,
+	}
+
+	file, err := api.UploadFile(params)
+	if err != nil {
+		fmt.Printf("Error Uploading File %s: %v\n", filePath, err)
+		return
+	}
+
+	fmt.Printf("FIle %s Uploaded. File ID: %s\n", filePath, file.ID)
 }
